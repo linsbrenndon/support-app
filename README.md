@@ -42,3 +42,32 @@ Reiniciar o serviço de spooler de impressão
 
 Exibir top 10 processos por uso de CPU
 Gerar relatório detalhado de hardware (sistema, CPU, discos)
+
+📦 Requisitos
+
+PowerShell 5.1 ou superior
+Sistema operacional Windows
+Execução de scripts habilitada:
+
+    Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+🛠️ Como Executar
+
+Clone ou baixe este repositório.
+Abra o PowerShell como administrador.
+Execute o script:
+    
+    .\Ferramentas-Suporte.ps1
+
+🔐 Permissões
+
+Algumas funções exigem permissões de administrador, como:
+
+Reinício do sistema
+Reset da rede
+Modificações no registro (correções de impressora)
+
+📎 Observações
+
+A função de desinstalação de programas utiliza Win32_Product, que pode ser lenta e forçar reinstalação de alguns softwares. Use com cautela.
+O teste de velocidade usa URLs públicos (Fast.com e HttpBin.org). Requer conexão com a internet.
