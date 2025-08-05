@@ -5,9 +5,13 @@ Uma ferramenta visual em PowerShell para auxiliar técnicos de suporte na manute
 
 A interface contém 4 abas principais:
 Sistema
+
 Rede
+
 Impressoras
+
 Diagnóstico
+
 
 🚀 Funcionalidades
 
