@@ -1,0 +1,224 @@
+﻿Add-Type -AssemblyName PresentationFramework
+Add-Type -AssemblyName Microsoft.VisualBasic
+
+[xml]$XAML = @"
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        Title="Suporte Técnico - Ferramentas BL" Height="470" Width="700" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen">
+    <Grid Background="#FF1E1E1E">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TabControl Name="MenuTabs" Margin="10" Grid.Row="0">
+            <TabItem Header="Sistema">
+                <StackPanel Margin="10">
+                    <Button Content="Reiniciar Computador" Margin="5" Height="35" Name="BtnReiniciar"/>
+                    <Button Content="Otimizar Lentidão" Margin="5" Height="35" Name="BtnLentidao"/>
+                    <Button Content="Flush DNS" Margin="5" Height="35" Name="BtnFlushDNS"/>
+                    <Button Content="Exibir Informações de Rede" Margin="5" Height="35" Name="BtnIPAll"/>
+                    <Button Content="Informações do Sistema" Margin="5" Height="35" Name="BtnSysInfo"/>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Rede">
+                <StackPanel Margin="10">
+                    <Button Content="Flush DNS" Margin="5" Height="35" Name="BtnFlushDNS2"/>
+                    <Button Content="Teste de Rede" Margin="5" Height="35" Name="BtnSpeedTest"/>
+                    <Button Content="Verificar Atualizações" Margin="5" Height="35" Name="BtnWindowsUpdate"/>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Impressão">
+                <StackPanel Margin="10">
+                    <Button Content="Corrigir Erro 0x0000011b" Margin="5" Height="35" Name="BtnErro11b"/>
+                    <Button Content="Corrigir Erro 0x00000bcb" Margin="5" Height="35" Name="BtnErro0bcb"/>
+                    <Button Content="Corrigir Erro 0x00000709" Margin="5" Height="35" Name="BtnErro709"/>
+                    <Button Content="Reiniciar Spooler de Impressão" Margin="5" Height="35" Name="BtnSpooler"/>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Utilitários">
+                <StackPanel Margin="10">
+                    <Button Content="Limpeza de Disco" Margin="5" Height="35" Name="BtnLimpeza"/>
+                    <Button Content="Desinstalar Programa" Margin="5" Height="35" Name="BtnDesinstalar"/>
+                    <Button Content="Fechar Aplicativo" Margin="5" Height="35" Name="BtnSair"/>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+
+        <TextBlock Name="StatusText" Grid.Row="1" Margin="10,0,10,0" Foreground="LightGray" Text="" FontSize="12"/>
+        <ProgressBar Name="BarraProgresso" Grid.Row="2" Height="15" Margin="10,0,10,10"
+                     Foreground="LightGreen" Background="Gray" Visibility="Collapsed"/>
+    </Grid>
+</Window>
+"@
+
+# Carregar janela
+$reader = New-Object System.Xml.XmlNodeReader $XAML
+$Form = [Windows.Markup.XamlReader]::Load($reader)
+
+# Função recursiva para pegar todos os botões dentro de um container
+function Get-ButtonsRecursive {
+    param($parent)
+    $btns = @()
+    foreach ($child in $parent.Children) {
+        if ($child -is [System.Windows.Controls.Button]) {
+            $btns += $child
+        }
+        elseif ($child -is [System.Windows.Controls.Panel] -or $child -is [System.Windows.Controls.ContentControl]) {
+            $btns += Get-ButtonsRecursive $child
+        }
+    }
+    return $btns
+}
+
+# Mapear todos os botões dentro dos tabs, recursivamente
+$allButtons = @{}
+$tabControl = $Form.FindName("MenuTabs")
+foreach ($tabItem in $tabControl.Items) {
+    $content = $tabItem.Content
+    $buttons = Get-ButtonsRecursive $content
+    foreach ($btn in $buttons) {
+        if ($btn.Name) {
+            $allButtons[$btn.Name] = $btn
+        }
+    }
+}
+
+# Debug: listar nomes dos botões carregados
+Write-Host "Botões carregados:"
+foreach ($nome in $allButtons.Keys) {
+    Write-Host " - $nome"
+}
+
+# Referências para status e progress bar
+$ProgressBar = $Form.FindName("BarraProgresso")
+$StatusText = $Form.FindName("StatusText")
+
+# Funções para barra e status
+function Desativar-Todos-Botoes {
+    foreach ($btn in $allButtons.Values) { $btn.IsEnabled = $false }
+}
+function Ativar-Todos-Botoes {
+    foreach ($btn in $allButtons.Values) { $btn.IsEnabled = $true }
+}
+function Mostrar-Barra($texto = "Processando...") {
+    $ProgressBar.Dispatcher.Invoke([action]{
+        $ProgressBar.IsIndeterminate = $true
+        $ProgressBar.Visibility = "Visible"
+        $StatusText.Text = $texto
+    })
+}
+function Esconder-Barra {
+    $ProgressBar.Dispatcher.Invoke([action]{
+        $ProgressBar.IsIndeterminate = $false
+        $ProgressBar.Visibility = "Collapsed"
+        $StatusText.Text = ""
+    })
+}
+
+# Função exemplo: teste de velocidade
+function Testar-VelocidadeRede {
+    try {
+        Desativar-Todos-Botoes
+        Mostrar-Barra "Executando teste de velocidade de rede..."
+
+        if (-not (Get-Module -ListAvailable -Name Speedtest.Net)) {
+            Install-Module Speedtest.Net -Force -Scope CurrentUser -ErrorAction Stop
+        }
+        Import-Module Speedtest.Net -ErrorAction Stop
+
+        $speedtest = Invoke-Speedtest
+
+        $msg = "Ping: $($speedtest.Ping) ms`nDownload: {0} Mbps`nUpload: {1} Mbps" -f `
+            [math]::Round($speedtest.DownloadSpeed / 1MB * 8, 2), `
+            [math]::Round($speedtest.UploadSpeed / 1MB * 8, 2)
+
+        Esconder-Barra
+        Ativar-Todos-Botoes
+        [System.Windows.MessageBox]::Show($msg,"Teste de Velocidade de Rede")
+    }
+    catch {
+        Esconder-Barra
+        Ativar-Todos-Botoes
+        [System.Windows.MessageBox]::Show("Erro ao executar teste: $_","Erro")
+    }
+}
+
+# Função exemplo: reiniciar computador
+function Reiniciar-Computador {
+    shutdown /r /t 0
+}
+
+# Função exemplo: otimizar lentidão
+function Otimizar-Lentidao {
+    Desativar-Todos-Botoes
+    Mostrar-Barra "Otimização em andamento..."
+    $job = Start-Job -ScriptBlock {
+        Start-Process "$env:TEMP"
+        Start-Process "$env:SystemRoot\SoftwareDistribution\Download"
+        Start-Process "$env:LOCALAPPDATA\Microsoft\Windows\Explorer"
+        Start-Process "C:\Windows\Prefetch"
+        sfc /scannow | Out-Null
+        Remove-Item -Path "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path "$env:SystemRoot\SoftwareDistribution\Download\*" -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path "$env:LOCALAPPDATA\Microsoft\Windows\Explorer\*" -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path "C:\Windows\Prefetch\*" -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    $job | Wait-Job | Out-Null
+    Remove-Job $job
+    Esconder-Barra
+    Ativar-Todos-Botoes
+}
+
+# Associa eventos aos botões usando $allButtons
+$allButtons.BtnReiniciar.Add_Click({ Reiniciar-Computador })
+$allButtons.BtnLentidao.Add_Click({ Otimizar-Lentidao })
+$allButtons.BtnFlushDNS.Add_Click({
+    ipconfig /flushdns | Out-Null
+    [System.Windows.MessageBox]::Show("Cache DNS limpo.","Flush DNS")
+})
+$allButtons.BtnFlushDNS2.Add_Click({
+    ipconfig /flushdns | Out-Null
+    [System.Windows.MessageBox]::Show("Cache DNS limpo.","Flush DNS")
+})
+$allButtons.BtnIPAll.Add_Click({ Start-Process powershell -ArgumentList "ipconfig /all | more" })
+$allButtons.BtnSysInfo.Add_Click({ Start-Process powershell -ArgumentList "systeminfo | more" })
+$allButtons.BtnSpeedTest.Add_Click({ Testar-VelocidadeRede })
+$allButtons.BtnWindowsUpdate.Add_Click({
+    [System.Windows.MessageBox]::Show("Função verificar atualizações aqui.")
+})
+$allButtons.BtnErro11b.Add_Click({
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Print" /v RpcAuthnLevelPrivacyEnabled /t REG_DWORD /d 0 /f | Out-Null
+    [System.Windows.MessageBox]::Show("Erro 0x0000011b corrigido.","Correção")
+})
+$allButtons.BtnErro0bcb.Add_Click({
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Printers\PointAndPrint" /v RestrictDriverInstallationToAdministrators /t REG_DWORD /d 0 /f | Out-Null
+    [System.Windows.MessageBox]::Show("Erro 0x00000bcb corrigido.","Correção")
+})
+$allButtons.BtnErro709.Add_Click({
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Printers\RPC" /v RpcUseNamedPipeProtocol /t REG_DWORD /d 1 /f | Out-Null
+    [System.Windows.MessageBox]::Show("Erro 0x00000709 corrigido.","Correção")
+})
+$allButtons.BtnSpooler.Add_Click({
+    Desativar-Todos-Botoes
+    Mostrar-Barra "Reiniciando spooler de impressão..."
+    Start-Job -ScriptBlock {
+        net stop spooler | Out-Null
+        Start-Sleep -Seconds 2
+        net start spooler | Out-Null
+    } | Wait-Job | Out-Null
+    Esconder-Barra
+    Ativar-Todos-Botoes
+})
+$allButtons.BtnLimpeza.Add_Click({
+    Start-Process cleanmgr -ArgumentList "/sagerun:1"
+    [System.Windows.MessageBox]::Show("Limpeza de disco aberta.","Limpeza")
+})
+$allButtons.BtnDesinstalar.Add_Click({
+    [System.Windows.MessageBox]::Show("Função desinstalar programa aqui.")
+})
+$allButtons.BtnSair.Add_Click({ $Form.Close() })
+
+# Exibir janela
+$Form.ShowDialog() | Out-Null
