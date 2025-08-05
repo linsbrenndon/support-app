@@ -4,6 +4,7 @@ Uma ferramenta visual em PowerShell para auxiliar técnicos de suporte na manute
 🖼️ Interface Visual
 
 A interface contém 4 abas principais:
+
 Sistema
 
 Rede
