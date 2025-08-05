@@ -7,9 +7,10 @@ A interface contém 4 abas principais:
 Sistema
 Rede
 Impressoras
-
 Diagnóstico
+
 🚀 Funcionalidades
+
 ✅ Abas e Ações
 
 🖥️ Sistema
