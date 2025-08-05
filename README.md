@@ -21,33 +21,33 @@ Diagnóstico
 🖥️ Sistema
 
 
-Reiniciar o computador
+- Reiniciar o computador
 
-Melhorar desempenho (limpeza de arquivos e verificação SFC)
+- Melhorar desempenho (limpeza de arquivos e verificação SFC)
 
-Verificar espaço em disco
+- Verificar espaço em disco
 
-Verificar atualizações do Windows
+- Verificar atualizações do Windows
 
-Backup rápido do registro
+- Backup rápido do registro
 
-Desinstalar programas com filtro
+- Desinstalar programas com filtro
 
 
 🌐 Rede
 
 
-Flush DNS
+- Flush DNS
 
-Limpar cache DNS do navegador (Chrome e Firefox)
+- Limpar cache DNS do navegador (Chrome e Firefox)
 
-Exibir informações completas de rede
+- Exibir informações completas de rede
 
-Resetar configurações de rede
+- Resetar configurações de rede
 
-Ativar/desativar proxy
+- Ativar/desativar proxy
 
-Teste de velocidade (download e upload)
+- Teste de velocidade (download e upload)
 
 
 🖨️ Impressoras
@@ -55,21 +55,21 @@ Teste de velocidade (download e upload)
 
 Correções para erros comuns de impressora:
 
-0x0000011b
+- 0x0000011b
 
-0x00000bcb
+- 0x00000bcb
 
-0x00000709
+- 0x00000709
 
-Reiniciar o serviço de spooler de impressão
+- Reiniciar o serviço de spooler de impressão
 
 
 🔍 Diagnóstico
 
 
-Exibir top 10 processos por uso de CPU
+- Exibir top 10 processos por uso de CPU
 
-Gerar relatório detalhado de hardware (sistema, CPU, discos)
+- Gerar relatório detalhado de hardware (sistema, CPU, discos)
 
 
 📦 Requisitos
